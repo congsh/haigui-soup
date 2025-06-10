@@ -76,6 +76,50 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
   }, [unsubscribeRoom]);
 
   /**
+   * 订阅当前房间的更新
+   */
+  const subscribeToCurrentRoom = useCallback((roomId: string): void => {
+    console.log(`[RoomContext] subscribeToCurrentRoom called for room: ${roomId}`);
+    // 如果已经订阅了相同的房间，则不执行任何操作
+    if (subscribedRoomIdRef.current === roomId) {
+      console.log(`[RoomContext] Already subscribed to room ${roomId}. Skipping.`);
+      return;
+    }
+    
+    // 先取消之前的订阅
+    if (unsubscribeRoom) {
+      console.log(`[RoomContext] Unsubscribing from previous room: ${subscribedRoomIdRef.current}`);
+      unsubscribeRoom();
+      setUnsubscribeRoom(null);
+    }
+    
+    // 更新当前订阅的房间ID
+    subscribedRoomIdRef.current = roomId;
+    
+    // 创建新的订阅
+    console.log(`[RoomContext] Creating new subscription for room: ${roomId}`);
+    const unsubscribe = subscribeToRoom(roomId, (updatedRoom) => {
+      // 确认订阅ID没有变更
+      if (subscribedRoomIdRef.current !== roomId) {
+        console.log(`[RoomContext] Subscription ID changed. Current: ${subscribedRoomIdRef.current}, Received for: ${roomId}. Ignoring update.`);
+        return;
+      }
+      
+      console.log(`[RoomContext] Received update for room ${roomId}:`, updatedRoom);
+      setCurrentRoom(updatedRoom);
+      
+      // 获取用户笔记
+      if (currentUser && updatedRoom.notes && updatedRoom.notes[currentUser.uid]) {
+        const notesObj = updatedRoom.notes[currentUser.uid];
+        const notesList = Object.values(notesObj).filter(note => note.content.trim() !== '') as Note[];
+        setUserNotes(notesList);
+      }
+    });
+    
+    setUnsubscribeRoom(() => unsubscribe);
+  }, [unsubscribeRoom, currentUser]);
+
+  /**
    * 创建新房间
    */
   const createNewRoom = useCallback(async (
@@ -120,7 +164,9 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
    * 加入房间
    */
   const joinRoom = useCallback(async (inviteCode: string): Promise<Room | null> => {
+    console.log(`[RoomContext] joinRoom called with inviteCode: ${inviteCode}`);
     if (!currentUser) {
+      console.error('[RoomContext] User not available');
       throw new Error('用户信息不可用，请刷新页面重试');
     }
 
@@ -128,30 +174,33 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      console.log('[RoomContext] Calling joinRoomByCode from roomService...');
       const room = await joinRoomByCode(
         inviteCode,
         currentUser.uid,
         userName
       );
+      console.log('[RoomContext] Got response from roomService.joinRoomByCode:', room);
 
       if (room) {
         setCurrentRoom(room);
-        
-        // 保存当前房间ID到本地存储
         saveCurrentRoomId(room.id);
-        
-        // 订阅房间更新
+        console.log(`[RoomContext] Subscribing to room: ${room.id}`);
         subscribeToCurrentRoom(room.id);
+      } else {
+        console.warn('[RoomContext] joinRoomByCode returned null');
       }
       
       return room;
     } catch (err: any) {
+      console.error('[RoomContext] Error in joinRoom:', err);
       setError(err.message || '加入房间失败');
       throw err;
     } finally {
+      console.log('[RoomContext] joinRoom finished.');
       setIsLoading(false);
     }
-  }, [currentUser, userName]);
+  }, [currentUser, userName, subscribeToCurrentRoom]);
 
   /**
    * 离开房间
@@ -169,44 +218,6 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
     setCurrentRoom(null);
     setUserNotes([]);
   }, [unsubscribeRoom]);
-
-  /**
-   * 订阅当前房间的更新
-   */
-  const subscribeToCurrentRoom = useCallback((roomId: string): void => {
-    // 如果已经订阅了相同的房间，则不执行任何操作
-    if (subscribedRoomIdRef.current === roomId) {
-      return;
-    }
-    
-    // 先取消之前的订阅
-    if (unsubscribeRoom) {
-      unsubscribeRoom();
-      setUnsubscribeRoom(null);
-    }
-    
-    // 更新当前订阅的房间ID
-    subscribedRoomIdRef.current = roomId;
-    
-    // 创建新的订阅
-    const unsubscribe = subscribeToRoom(roomId, (updatedRoom) => {
-      // 确认订阅ID没有变更
-      if (subscribedRoomIdRef.current !== roomId) {
-        return;
-      }
-      
-      setCurrentRoom(updatedRoom);
-      
-      // 获取用户笔记
-      if (currentUser && updatedRoom.notes && updatedRoom.notes[currentUser.uid]) {
-        const notesObj = updatedRoom.notes[currentUser.uid];
-        const notesList = Object.values(notesObj).filter(note => note.content.trim() !== '') as Note[];
-        setUserNotes(notesList);
-      }
-    });
-    
-    setUnsubscribeRoom(() => unsubscribe);
-  }, [unsubscribeRoom, currentUser]);
 
   /**
    * 发送问题

@@ -10,7 +10,8 @@ import {
   Divider, 
   Radio, 
   Switch, 
-  message 
+  message,
+  Alert
 } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRoom } from '../context/RoomContext';
@@ -27,9 +28,17 @@ const CreateRoomPage: React.FC = () => {
   const navigate = useNavigate();
   const { createNewRoom, isLoading } = useRoom();
   const [form] = Form.useForm();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // 处理表单提交
   const handleSubmit = async (values: any) => {
+    console.log('[CreateRoomPage] Form submitted with values:', values);
+    setError(null);
+    setSuccess(null);
+    setCreating(true);
+
     try {
       const rules: RoomRules = {
         isRedSoup: values.isRedSoup === 'red',
@@ -38,17 +47,33 @@ const CreateRoomPage: React.FC = () => {
         allowFlowersAndTrash: values.allowFlowersAndTrash
       };
 
+      console.log('[CreateRoomPage] Calling createNewRoom with:', {
+        title: values.title,
+        description: values.description,
+        rules
+      });
+
       const room = await createNewRoom(
         values.title,
         values.description,
         rules
       );
 
+      console.log('[CreateRoomPage] Room created successfully:', room);
+      setSuccess(`房间创建成功！邀请码: ${room.inviteCode}`);
       message.success('房间创建成功');
-      navigate(`/room/${room.id}`);
-    } catch (error) {
-      message.error('创建房间失败');
-      console.error(error);
+      
+      // 给用户一点时间看到成功消息，然后导航到房间页面
+      setTimeout(() => {
+        navigate(`/room/${room.id}`);
+      }, 1000);
+    } catch (error: any) {
+      console.error('[CreateRoomPage] Error creating room:', error);
+      const errorMessage = error.message || '创建房间失败，请重试';
+      setError(errorMessage);
+      message.error(errorMessage);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -67,6 +92,28 @@ const CreateRoomPage: React.FC = () => {
           <Title level={2}>创建海龟汤房间</Title>
           <Paragraph>设置房间信息和规则，成为主持人出题。</Paragraph>
 
+          {error && (
+            <Alert
+              message="创建房间失败"
+              description={error}
+              type="error"
+              showIcon
+              closable
+              onClose={() => setError(null)}
+              style={{ marginBottom: '20px' }}
+            />
+          )}
+
+          {success && (
+            <Alert
+              message="创建房间成功"
+              description={success}
+              type="success"
+              showIcon
+              style={{ marginBottom: '20px' }}
+            />
+          )}
+
           <Card>
             <Form
               form={form}
@@ -78,6 +125,7 @@ const CreateRoomPage: React.FC = () => {
                 requireHandRaise: false,
                 allowFlowersAndTrash: true
               }}
+              disabled={creating}
             >
               <Title level={4}>基本信息</Title>
               <Form.Item
@@ -148,7 +196,7 @@ const CreateRoomPage: React.FC = () => {
                   type="primary" 
                   htmlType="submit" 
                   size="large" 
-                  loading={isLoading}
+                  loading={creating || isLoading}
                   block
                 >
                   创建房间

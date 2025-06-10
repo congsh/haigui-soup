@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Typography, Layout, Card, Form, Divider, message } from 'antd';
+import { Button, Input, Typography, Layout, Card, Form, Divider, message, Alert, Space } from 'antd';
 import { useAuth } from '../context/AuthContext';
 import { useRoom } from '../context/RoomContext';
 
@@ -19,6 +19,7 @@ const HomePage: React.FC = () => {
   const [newName, setNewName] = useState(userName);
   const [joinCode, setJoinCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error' | 'info' | 'warning', content: string} | null>(null);
 
   // 确保用户名已经设置
   useEffect(() => {
@@ -41,26 +42,51 @@ const HomePage: React.FC = () => {
 
   // 处理加入房间
   const handleJoinRoom = async () => {
-    if (!joinCode.trim()) {
+    const code = joinCode.trim().toUpperCase();
+    console.log(`[HomePage] Attempting to join room with code: ${code}`);
+
+    if (!code) {
       message.error('请输入邀请码');
+      setStatusMessage({type: 'error', content: '请输入邀请码'});
       return;
     }
 
     setIsLoading(true);
+    setStatusMessage({type: 'info', content: `正在尝试加入房间（邀请码: ${code}）...`});
+    
     try {
-      const room = await joinRoom(joinCode.trim().toUpperCase());
-      if (room) {
+      console.log('[HomePage] Calling joinRoom from context...');
+      const room = await joinRoom(code);
+      console.log('[HomePage] Got response from joinRoom context:', room);
+
+      if (room && room.id) {
         message.success('加入房间成功');
-        navigate(`/room/${room.id}`);
+        setStatusMessage({type: 'success', content: `成功加入房间: ${room.title}`});
+        console.log(`[HomePage] Navigating to /room/${room.id}`);
+        setTimeout(() => {
+          navigate(`/room/${room.id}`);
+        }, 500);
       } else {
-        message.error('房间不存在或已关闭');
+        const errorMsg = '无法加入房间，邀请码可能无效或已过期。';
+        message.error(errorMsg);
+        setStatusMessage({type: 'error', content: errorMsg});
+        console.warn('[HomePage] Join room failed. Room is null or has no ID.');
+        setIsLoading(false);
       }
-    } catch (error) {
-      message.error('加入房间失败');
-      console.error(error);
-    } finally {
+    } catch (error: any) {
+      const errorMessage = error.message || '加入房间时发生未知错误';
+      message.error(errorMessage);
+      setStatusMessage({type: 'error', content: errorMessage});
+      console.error('[HomePage] Error joining room:', error);
       setIsLoading(false);
     }
+  };
+
+  // 重置状态
+  const resetStatus = () => {
+    setStatusMessage(null);
+    setJoinCode('');
+    setIsLoading(false);
   };
 
   return (
@@ -110,6 +136,18 @@ const HomePage: React.FC = () => {
             </div>
           </Card>
 
+          {statusMessage && (
+            <Alert
+              message={statusMessage.type === 'error' ? '错误' : statusMessage.type === 'success' ? '成功' : '提示'}
+              description={statusMessage.content}
+              type={statusMessage.type}
+              showIcon
+              closable
+              onClose={resetStatus}
+              style={{ marginBottom: '20px' }}
+            />
+          )}
+
           <Card style={{ marginBottom: '20px' }}>
             <Title level={4}>创建新房间</Title>
             <Paragraph>作为主持人创建新的海龟汤房间，设置游戏规则并出题。</Paragraph>
@@ -128,15 +166,27 @@ const HomePage: React.FC = () => {
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
                 style={{ marginRight: '10px' }}
+                disabled={isLoading}
               />
-              <Button
-                type="primary"
-                size="large"
-                onClick={handleJoinRoom}
-                loading={isLoading}
-              >
-                加入
-              </Button>
+              <Space>
+                <Button
+                  type="primary"
+                  size="large"
+                  onClick={handleJoinRoom}
+                  loading={isLoading}
+                  disabled={!joinCode.trim()}
+                >
+                  加入
+                </Button>
+                {isLoading && (
+                  <Button size="large" onClick={() => {
+                    setIsLoading(false);
+                    setStatusMessage({type: 'info', content: '已取消加入房间'});
+                  }}>
+                    取消
+                  </Button>
+                )}
+              </Space>
             </div>
           </Card>
 

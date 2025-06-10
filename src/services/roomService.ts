@@ -95,24 +95,34 @@ export const joinRoomByCode = async (
   userId: string,
   userName: string
 ): Promise<Room | null> => {
+  console.log(`[roomService] joinRoomByCode called with inviteCode: ${inviteCode}, userId: ${userId}, userName: ${userName}`);
   try {
     // 查询房间
     const roomsByCode = getRoomsByCode();
+    console.log('[roomService] Fetched roomsByCode:', roomsByCode);
     const roomId = roomsByCode[inviteCode];
+    console.log(`[roomService] Looked up roomId: ${roomId} for inviteCode: ${inviteCode}`);
     
     if (!roomId) {
+      console.warn('[roomService] No roomId found for the given inviteCode.');
       return null;
     }
     
     const rooms = getRooms();
     const roomData = rooms[roomId];
+    console.log(`[roomService] Fetched roomData for roomId ${roomId}:`, roomData);
     
     if (!roomData) {
+      console.warn(`[roomService] No roomData found for roomId: ${roomId}.`);
       return null;
     }
     
     // 检查用户是否已在房间
-    if (roomData.users.some(user => user.id === userId)) {
+    const userInRoom = roomData.users.some(user => user.id === userId);
+    console.log(`[roomService] Is user ${userId} already in room? ${userInRoom}`);
+
+    if (userInRoom) {
+      console.log(`[roomService] User ${userId} already in room. Returning room data.`);
       return roomData;
     }
     
@@ -124,6 +134,7 @@ export const joinRoomByCode = async (
     };
     
     // 添加用户到房间
+    console.log('[roomService] Adding new user to room:', newUser);
     roomData.users.push(newUser);
     
     // 添加系统消息
@@ -139,15 +150,17 @@ export const joinRoomByCode = async (
     roomData.messages.push(systemMessage);
     
     // 保存更新后的房间
+    console.log('[roomService] Saving updated room data...');
     rooms[roomId] = roomData;
     saveRooms(rooms);
     
     // 触发房间更新事件
+    console.log(`[roomService] Triggering event 'room_${roomId}' with new data.`);
     triggerEvent(`room_${roomId}`, roomData);
     
     return roomData;
   } catch (error) {
-    console.error('加入房间失败:', error);
+    console.error('[roomService] Error in joinRoomByCode:', error);
     return null;
   }
 };
@@ -275,8 +288,10 @@ export const toggleHandRaise = async (roomId: string, userId: string, isRaising:
  * @returns 取消监听的函数
  */
 export const subscribeToRoom = (roomId: string, callback: (room: Room) => void): () => void => {
+  console.log(`[roomService] subscribeToRoom called for roomId: ${roomId}`);
   // 如果已经订阅过这个房间，先取消之前的监听
   if (subscribedRooms.has(roomId)) {
+    console.log(`[roomService] Room ${roomId} is already subscribed. Returning unsub function.`);
     // 只返回一个取消函数，但不立即触发回调
     return () => {
       subscribedRooms.delete(roomId);
@@ -284,11 +299,13 @@ export const subscribeToRoom = (roomId: string, callback: (room: Room) => void):
   }
   
   // 添加到已订阅列表
+  console.log(`[roomService] Adding ${roomId} to subscribed rooms.`);
   subscribedRooms.add(roomId);
   
   // 立即回调一次
   const room = getRoomData(roomId);
   if (room) {
+    console.log(`[roomService] Immediately calling callback for room ${roomId} with data:`, room);
     // 使用setTimeout避免同步调用可能导致的问题
     setTimeout(() => {
       if (subscribedRooms.has(roomId)) {
@@ -298,15 +315,18 @@ export const subscribeToRoom = (roomId: string, callback: (room: Room) => void):
   }
   
   // 添加监听器
+  console.log(`[roomService] Adding listener for event 'room_${roomId}'.`);
   const unsubscribe = addListener<Room>(`room_${roomId}`, (updatedRoom) => {
     // 确保仍然订阅此房间
     if (subscribedRooms.has(roomId)) {
+      console.log(`[roomService] Listener triggered for room ${roomId}. Calling callback with data:`, updatedRoom);
       callback(updatedRoom);
     }
   });
   
   // 返回取消订阅函数
   return () => {
+    console.log(`[roomService] Unsubscribing from room ${roomId}.`);
     subscribedRooms.delete(roomId);
     unsubscribe();
   };

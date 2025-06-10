@@ -24,7 +24,9 @@ const STORAGE_KEYS = {
  */
 export const getRooms = (): Record<string, Room> => {
   const rooms = localStorage.getItem(STORAGE_KEYS.ROOMS);
-  return rooms ? JSON.parse(rooms) : {};
+  const parsedRooms = rooms ? JSON.parse(rooms) : {};
+  console.log('[localStorageService] getRooms called, found rooms:', parsedRooms);
+  return parsedRooms;
 };
 
 /**
@@ -32,27 +34,42 @@ export const getRooms = (): Record<string, Room> => {
  */
 export const getRoomsByCode = (): Record<string, string> => {
   const roomsByCode = localStorage.getItem(STORAGE_KEYS.ROOMS_BY_CODE);
-  return roomsByCode ? JSON.parse(roomsByCode) : {};
+  const parsedRoomsByCode = roomsByCode ? JSON.parse(roomsByCode) : {};
+  console.log('[localStorageService] getRoomsByCode called, found roomsByCode:', parsedRoomsByCode);
+  return parsedRoomsByCode;
 };
 
 /**
  * 保存房间列表到本地存储
  */
 export const saveRooms = (rooms: Record<string, Room>): void => {
-  localStorage.setItem(STORAGE_KEYS.ROOMS, JSON.stringify(rooms));
+  console.log('[localStorageService] saveRooms called with rooms:', rooms);
+  try {
+    localStorage.setItem(STORAGE_KEYS.ROOMS, JSON.stringify(rooms));
+    console.log('[localStorageService] Rooms saved successfully.');
+  } catch (error) {
+    console.error('[localStorageService] Error saving rooms:', error);
+  }
 };
 
 /**
  * 保存邀请码到房间ID的映射到本地存储
  */
 export const saveRoomsByCode = (roomsByCode: Record<string, string>): void => {
-  localStorage.setItem(STORAGE_KEYS.ROOMS_BY_CODE, JSON.stringify(roomsByCode));
+  console.log('[localStorageService] saveRoomsByCode called with roomsByCode:', roomsByCode);
+  try {
+    localStorage.setItem(STORAGE_KEYS.ROOMS_BY_CODE, JSON.stringify(roomsByCode));
+    console.log('[localStorageService] RoomsByCode saved successfully.');
+  } catch (error) {
+    console.error('[localStorageService] Error saving roomsByCode:', error);
+  }
 };
 
 /**
  * 保存当前房间ID
  */
 export const saveCurrentRoomId = (roomId: string | null): void => {
+  console.log(`[localStorageService] saveCurrentRoomId called with roomId: ${roomId}`);
   if (roomId) {
     localStorage.setItem(STORAGE_KEYS.CURRENT_ROOM_ID, roomId);
   } else {
@@ -64,7 +81,9 @@ export const saveCurrentRoomId = (roomId: string | null): void => {
  * 获取当前房间ID
  */
 export const getCurrentRoomId = (): string | null => {
-  return localStorage.getItem(STORAGE_KEYS.CURRENT_ROOM_ID);
+  const roomId = localStorage.getItem(STORAGE_KEYS.CURRENT_ROOM_ID);
+  console.log(`[localStorageService] getCurrentRoomId called, found roomId: ${roomId}`);
+  return roomId;
 };
 
 /**

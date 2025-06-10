@@ -36,3 +36,83 @@
     transform: rotate(360deg);
   }
 }
+
+/* 全局样式 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  background-color: #f0f2f5;
+}
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  background-color: #f0f2f5;
+  font-size: 20px;
+}
+
+/* 聊天消息样式 */
+.message-container {
+  margin-bottom: 16px;
+}
+
+/* 笔记样式 */
+.note-item {
+  margin-bottom: 10px;
+}
+
+.note-important {
+  border-left: 3px solid #faad14;
+  background-color: #fffbe6;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .ant-layout-sider {
+    display: none;
+  }
+  
+  .mobile-tabs {
+    margin-bottom: 16px;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

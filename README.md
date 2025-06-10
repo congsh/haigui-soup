@@ -1,46 +1,103 @@
-# Getting Started with Create React App
+# 海龟汤互动房间
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+这是一个基于React的海龟汤互动房间应用，支持多人在本地参与海龟汤游戏。所有数据使用localStorage存储。
 
-## Available Scripts
+## 功能特点
 
-In the project directory, you can run:
+- 角色分为主持人和参与者
+- 主持人可以创建房间，设置规则
+- 参与者可以通过邀请码加入房间
+- 实时聊天和消息同步
+- 主持人只能回复"是"、"否"或"不确定"
+- 主持人可以发布情报
+- 参与者可以提问和做笔记
+- 支持举手功能和鲜花/垃圾互动
+- 移动端适配
 
-### `npm start`
+## 技术栈
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- React 18
+- TypeScript
+- Ant Design
+- LocalStorage/IndexedDB 本地存储
+- React Router
+- 响应式设计
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 数据存储
 
-### `npm test`
+本应用使用浏览器的LocalStorage进行数据存储，具有以下特点：
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- 无需云服务，完全在本地运行
+- 数据在同一个浏览器内永久保存
+- 无需联网即可使用
+- 数据不会在不同设备间同步
 
-### `npm run build`
+## 开始使用
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 安装依赖
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 运行
 
-### `npm run eject`
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 构建生产版本
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+npm run build
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 部署到Netlify
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+1. 创建Netlify账号并连接到你的代码仓库
+2. 设置构建命令为`npm run build`
+3. 设置发布目录为`build`
+4. 部署应用
 
-## Learn More
+## 使用说明
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 主持人
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. 在首页点击"创建房间"
+2. 设置房间标题和规则
+3. 创建后，复制邀请码分享给参与者
+4. 使用"是"、"否"、"不确定"按钮回答问题
+5. 可以发布情报推进游戏
+6. 可以结束或重新开始房间
+
+### 参与者
+
+1. 在首页输入邀请码加入房间
+2. 查看房间规则和其他参与者
+3. 提出问题
+4. 如果房间设置需要举手，可以点击举手按钮
+5. 记录重要线索到笔记中
+6. 可以丢鲜花或垃圾表达情绪
+
+## 项目结构
+
+```
+src/
+  ├── components/     # 组件
+  │   ├── host/       # 主持人组件
+  │   └── participant/ # 参与者组件
+  ├── context/        # 上下文
+  ├── hooks/          # 自定义钩子
+  ├── pages/          # 页面组件
+  ├── services/       # 服务和API
+  ├── types/          # TypeScript类型定义
+  └── utils/          # 工具函数
+```
+
+## 海龟汤游戏介绍
+
+海龟汤是一种智力游戏，由主持人提出一个谜题，参与者通过提问来逐步接近真相。主持人只能回答"是"、"否"或"不确定"。这个应用提供了一个方便的在线平台，让朋友们可以一起玩海龟汤游戏。
+
+## 许可证
+
+MIT License
